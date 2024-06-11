@@ -1,25 +1,27 @@
 package main
 
 import (
-	"context"
 	"fmt"
-
-	"golang.design/x/clipboard"
+	"os"
 )
 
 func main() {
-	fmt.Println("init cliboard...")
-	err := clipboard.Init()
+	args := os.Args
+	ip, err := validateIp(args[2])
 	if err != nil {
-		panic(err)
+		fmt.Println("IP地址错误")
+		return
 	}
-	ch := clipboard.Watch(context.TODO(), clipboard.FmtText)
-	var content []byte
-	for {
-		content = <-ch
-		fmt.Println("w: ", string(content))
+	port, err := validatePort(args[3])
+	if err != nil {
+		fmt.Println("端口错误")
+		return
 	}
-
-	// bstr := clipboard.Read(clipboard.FmtText)
-	// fmt.Println(string(bstr))
+	if args[1] == "client" {
+		runClient(ip, port)
+	} else if args[1] == "server" {
+		runServer(ip, port)
+	} else {
+		fmt.Println("参数错误！")
+	}
 }
