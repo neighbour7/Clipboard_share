@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net"
@@ -22,15 +23,40 @@ func runClient(ip string, port int) {
 	if err != nil {
 		panic(err)
 	}
-	ch := clipboard.Watch(context.TODO(), clipboard.FmtText)
+	textCh := clipboard.Watch(context.TODO(), clipboard.FmtText)
+	imageCh := clipboard.Watch(context.Background(), clipboard.FmtImage)
+	var lastContent []byte
 	var content []byte
+
 	for {
 		select {
-		case content = <-ch:
+		case content = <-textCh:
+			if bytes.Equal(lastContent, content) {
+				continue
+			}
+			// if string(lastContent) == string(content) {
+			// 	continue
+			// }
 			t.Send("string", content)
+			lastContent = content
 		case msg := <-watchCh:
-			fmt.Println(string(msg.Content))
-			clipboard.Write(clipboard.FmtText, msg.Content)
+			// fmt.Println("get clipboard data: ", string(msg.Type))
+			if msg.Type == "string" {
+				clipboard.Write(clipboard.FmtText, msg.Content)
+			} else if msg.Type == "png" {
+				fmt.Println("test png")
+				clipboard.Write(clipboard.FmtImage, msg.Content)
+			} else {
+				fmt.Println("warning: type error")
+			}
+
+			lastContent = msg.Content
+		case content := <-imageCh:
+			if bytes.Equal(lastContent, content) {
+				continue
+			}
+			t.Send("png", content)
+			lastContent = content
 		}
 
 	}

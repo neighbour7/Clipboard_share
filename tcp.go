@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net"
 )
 
@@ -45,17 +47,28 @@ func (t *Tcp) Read() (*TcpMsg, error) {
 		return nil, err
 	}
 	if binLen != 8 {
-		return nil, errors.New("msg len not match")
+		return nil, errors.New("msg len not match: get " + fmt.Sprint(binLen))
 	}
 	msgLen := BytesToInt64(msgLenInfo)
 
 	binContent := make([]byte, msgLen)
-	binContentLen, err := t.conn.Read(binContent)
-	if err != nil {
-		return nil, err
+	var totalBinContentLen int
+	for {
+		n, err := t.conn.Read(binContent[totalBinContentLen:])
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		totalBinContentLen += n
+		if totalBinContentLen == len(binContent) {
+			break
+		}
 	}
-	if int64(binContentLen) != msgLen {
-		return nil, errors.New("content len not match")
+
+	if int64(totalBinContentLen) != msgLen {
+		return nil, errors.New("content len not match: get" + fmt.Sprint(int64(totalBinContentLen)) + "  " + fmt.Sprint(msgLen))
 	}
 	msg := &TcpMsg{}
 	err = json.Unmarshal(binContent, msg)
@@ -81,12 +94,14 @@ func (t *Tcp) Send(msgType string, content []byte) error {
 		return errors.New("send headerLen error")
 	}
 	byteLen, err := t.conn.Write(msgBin)
+
 	if err != nil {
 		return err
 	}
 	if byteLen != msgLen {
 		return errors.New("byteLen != msgLen")
 	}
+	fmt.Println("send successfully: ", msgType)
 	return nil
 }
 
