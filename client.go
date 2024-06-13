@@ -34,18 +34,16 @@ func runClient(ip string, port int) {
 			if bytes.Equal(lastContent, content) {
 				continue
 			}
-			// if string(lastContent) == string(content) {
-			// 	continue
-			// }
 			t.Send("string", content)
+			fmt.Println("Send text: ", string(content))
 			lastContent = content
 		case msg := <-watchCh:
-			// fmt.Println("get clipboard data: ", string(msg.Type))
 			if msg.Type == "string" {
 				clipboard.Write(clipboard.FmtText, msg.Content)
+				fmt.Println("Write text: ", string(msg.Content))
 			} else if msg.Type == "png" {
-				fmt.Println("test png")
 				clipboard.Write(clipboard.FmtImage, msg.Content)
+				fmt.Println("Write png size: ", len(msg.Content))
 			} else {
 				fmt.Println("warning: type error")
 			}
@@ -56,9 +54,8 @@ func runClient(ip string, port int) {
 				continue
 			}
 			t.Send("png", content)
+			fmt.Println("Send png size: ", len(content))
 			lastContent = content
 		}
-
 	}
-
 }

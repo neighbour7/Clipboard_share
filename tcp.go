@@ -52,7 +52,7 @@ func (t *Tcp) Read() (*TcpMsg, error) {
 	msgLen := BytesToInt64(msgLenInfo)
 
 	binContent := make([]byte, msgLen)
-	var totalBinContentLen int
+	totalBinContentLen := 0
 	for {
 		n, err := t.conn.Read(binContent[totalBinContentLen:])
 		if err != nil {
@@ -101,7 +101,6 @@ func (t *Tcp) Send(msgType string, content []byte) error {
 	if byteLen != msgLen {
 		return errors.New("byteLen != msgLen")
 	}
-	fmt.Println("send successfully: ", msgType)
 	return nil
 }
 

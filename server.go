@@ -3,44 +3,50 @@ package main
 import (
 	"fmt"
 	"net"
+	"sync"
 )
 
-var tcpList []*Tcp
+var lock sync.Mutex
+var tcpList map[string]*Tcp
 
-// var lock sync.Mutex
-
-func runServer(ip string, port int) {
+func runServer(ip string, port int) error {
+	tcpList = make(map[string]*Tcp)
 	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
 		fmt.Println("list error", err.Error())
-		return
+		return err
 	}
-	defer ln.Close()
-
-	for {
-		c, err := ln.Accept()
-		if err != nil {
-			fmt.Println("accep error", err.Error())
-			return
+	go func() {
+		for {
+			c, err := ln.Accept()
+			if err != nil {
+				fmt.Println("accep error", err.Error())
+				break
+			}
+			t := NewTcp(c)
+			lock.Lock()
+			tcpList[c.RemoteAddr().String()] = t
+			lock.Unlock()
+			fmt.Println("new conn: ", c.RemoteAddr().String())
+			go listenMsgHandler(t)
 		}
-		t := &Tcp{
-			conn:    c,
-			name:    c.RemoteAddr().String(),
-			watchCh: make(chan *TcpMsg, 1),
-		}
-		tcpList = append(tcpList, t)
-		go listenMsgHandler(t)
-	}
+	}()
+	return nil
 }
 
 func listenMsgHandler(t *Tcp) {
+	defer t.Close()
 	for {
 		msg, err := t.Read()
 		if err != nil {
 			break
 		}
+		fmt.Printf("Get the %s and notify anyone.", msg.Type)
 		notifyMsg(msg)
 	}
+	lock.Lock()
+	delete(tcpList, t.name)
+	lock.Unlock()
 }
 
 func notifyMsg(content *TcpMsg) {
