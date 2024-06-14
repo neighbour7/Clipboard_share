@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net"
 	"sync"
@@ -9,13 +10,28 @@ import (
 var lock sync.Mutex
 var tcpList map[string]*Tcp
 
-func runServer(host string, port int) error {
-	tcpList = make(map[string]*Tcp)
-	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
+const (
+	certFilePath = "cert/cert.pem"
+	keyFilePath  = "cert/key.pem"
+)
+
+func runServer(host string, port int, useTls bool) error {
+	var ln net.Listener
+	var err error
+	if useTls {
+		cert, certErr := tls.LoadX509KeyPair(certFilePath, keyFilePath)
+		if certErr != nil {
+			panic(certErr)
+		}
+		config := tls.Config{Certificates: []tls.Certificate{cert}}
+		ln, err = tls.Listen("tcp", fmt.Sprintf("%s:%d", host, port), &config)
+	} else {
+		ln, err = net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	}
+	if err != nil {
+		panic(err)
+	}
+	tcpList = make(map[string]*Tcp)
 	go func() {
 		for {
 			c, err := ln.Accept()

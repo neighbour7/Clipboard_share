@@ -9,6 +9,7 @@ import (
 
 var help = flag.Bool("help", false, "this help")
 var isServer = flag.Bool("isServer", false, "is server")
+var useTls = flag.Bool("useTls", false, "use tls protocol")
 var host = flag.String("host", "", "ip address")
 var port = flag.Int("port", 8080, "port")
 
@@ -16,6 +17,8 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `Usage:
   clipboard_share -host 192.168.1.1 -port 8080 -isServer
   clipboard_share -host 192.168.1.1 -port 8080
+  clipboard_share -host 192.168.1.1 -port 8080 -isServer -useTls
+  clipboard_share -host 192.168.1.1 -port 8080 -useTls
 
 Options:
 `)
@@ -42,11 +45,11 @@ func main() {
 		return
 	}
 	if *isServer {
-		err := runServer(host, port)
+		err := runServer(host, port, *useTls)
 		if err != nil {
 			return
 		}
 	}
 	time.Sleep(1 * time.Second)
-	runClient(host, port)
+	runClient(host, port, *useTls)
 }

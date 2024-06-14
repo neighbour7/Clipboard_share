@@ -3,23 +3,30 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 
 	"golang.design/x/clipboard"
 )
 
-func runClient(host string, port int) {
-
-	conn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
-	if cerr != nil {
-		fmt.Println("Error connecting:", cerr.Error())
-		return
+func runClient(host string, port int, useTls bool) {
+	var conn net.Conn
+	var err error
+	if useTls {
+		config := tls.Config{InsecureSkipVerify: true}
+		conn, err = tls.Dial("tcp", fmt.Sprintf("%s:%d", host, port), &config)
+	} else {
+		conn, err = net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
 	}
+	if err != nil {
+		panic(err)
+	}
+
 	t := NewTcp(conn)
 	watchCh := t.Watch()
 	defer t.Close()
-	err := clipboard.Init()
+	err = clipboard.Init()
 	if err != nil {
 		panic(err)
 	}
