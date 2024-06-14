@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
-	"strconv"
 )
 
 const headerLen = 8
@@ -16,12 +15,11 @@ func validateIp(ip string) (string, error) {
 	return "", errors.New("ip error")
 }
 
-func validatePort(port string) (int, error) {
-	p, err := strconv.Atoi(port)
-	if err != nil {
-		return 0, err
+func validatePort(port int) (int, error) {
+	if port < 0 || port > 65535 {
+		return -1, errors.New("")
 	}
-	return p, nil
+	return port, nil
 }
 
 func Int64ToBytes(num int64) []byte {

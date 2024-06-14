@@ -9,9 +9,9 @@ import (
 	"golang.design/x/clipboard"
 )
 
-func runClient(ip string, port int) {
+func runClient(host string, port int) {
 
-	conn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
+	conn, cerr := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
 	if cerr != nil {
 		fmt.Println("Error connecting:", cerr.Error())
 		return

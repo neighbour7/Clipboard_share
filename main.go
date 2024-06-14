@@ -1,29 +1,52 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"time"
 )
 
+var help = flag.Bool("help", false, "this help")
+var isServer = flag.Bool("isServer", false, "is server")
+var host = flag.String("host", "", "ip address")
+var port = flag.Int("port", 8080, "port")
+
+func usage() {
+	fmt.Fprintf(os.Stderr, `Usage:
+  clipboard_share -host 192.168.1.1 -port 8080 -isServer
+  clipboard_share -host 192.168.1.1 -port 8080
+
+Options:
+`)
+	flag.PrintDefaults()
+}
+
 func main() {
-	args := os.Args
-	ip, err := validateIp(args[1])
-	if err != nil {
-		fmt.Println("IP地址错误")
+	flag.Usage = usage
+	flag.Parse()
+
+	if *help {
+		flag.Usage()
 		return
 	}
-	port, err := validatePort(args[2])
+
+	host, err := validateIp(*host)
 	if err != nil {
-		fmt.Println("端口错误")
+		fmt.Println("Incorrect host")
 		return
 	}
-	if args[3] == "server" {
-		err := runServer(ip, port)
+	port, err := validatePort(*port)
+	if err != nil {
+		fmt.Println("Incorrect port")
+		return
+	}
+	if *isServer {
+		err := runServer(host, port)
 		if err != nil {
 			return
 		}
 	}
 	time.Sleep(1 * time.Second)
-	runClient(ip, port)
+	runClient(host, port)
 }

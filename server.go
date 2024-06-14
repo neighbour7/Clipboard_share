@@ -9,25 +9,25 @@ import (
 var lock sync.Mutex
 var tcpList map[string]*Tcp
 
-func runServer(ip string, port int) error {
+func runServer(host string, port int) error {
 	tcpList = make(map[string]*Tcp)
-	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", ip, port))
+	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
-		fmt.Println("list error", err.Error())
+		fmt.Println(err.Error())
 		return err
 	}
 	go func() {
 		for {
 			c, err := ln.Accept()
 			if err != nil {
-				fmt.Println("accep error", err.Error())
+				fmt.Println("Accep error", err.Error())
 				break
 			}
 			t := NewTcp(c)
 			lock.Lock()
 			tcpList[c.RemoteAddr().String()] = t
 			lock.Unlock()
-			fmt.Println("new conn: ", c.RemoteAddr().String())
+			fmt.Println("Add host: ", c.RemoteAddr().String())
 			go listenMsgHandler(t)
 		}
 	}()
@@ -41,11 +41,12 @@ func listenMsgHandler(t *Tcp) {
 		if err != nil {
 			break
 		}
-		fmt.Printf("Get the %s and notify anyone.", msg.Type)
+		fmt.Printf("Get the %s and notify anyone.\n", msg.Type)
 		notifyMsg(msg)
 	}
 	lock.Lock()
 	delete(tcpList, t.name)
+	fmt.Printf("Delete host %s\n", t.name)
 	lock.Unlock()
 }
 
