@@ -12,13 +12,16 @@ var isServer = flag.Bool("isServer", false, "is server")
 var useTls = flag.Bool("useTls", false, "use tls protocol")
 var host = flag.String("host", "", "ip address")
 var port = flag.Int("port", 8080, "port")
+var password = flag.String("password", "changeme", "password")
 
 func usage() {
 	fmt.Fprintf(os.Stderr, `Usage:
-  clipboard_share -host 192.168.1.1 -port 8080 -isServer
   clipboard_share -host 192.168.1.1 -port 8080
-  clipboard_share -host 192.168.1.1 -port 8080 -isServer -useTls
   clipboard_share -host 192.168.1.1 -port 8080 -useTls
+  clipboard_share -host 192.168.1.1 -port 8080 -useTls -password 123456
+  clipboard_share -host 192.168.1.1 -port 8080 -isServer
+  clipboard_share -host 192.168.1.1 -port 8080 -isServer -useTls
+  clipboard_share -host 192.168.1.1 -port 8080 -isServer -useTls -password 123456
 
 Options:
 `)
@@ -45,11 +48,11 @@ func main() {
 		return
 	}
 	if *isServer {
-		err := runServer(host, port, *useTls)
+		err := runServer(host, port, *useTls, *password)
 		if err != nil {
 			return
 		}
 	}
 	time.Sleep(1 * time.Second)
-	runClient(host, port, *useTls)
+	runClient(host, port, *useTls, *password)
 }

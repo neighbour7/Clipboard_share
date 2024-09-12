@@ -8,8 +8,17 @@ import (
 	"net"
 )
 
+const (
+	TMUnknown int = iota
+	TMSystem
+	TMPassword
+	TMImg
+	TMText
+	TMFile
+)
+
 type TcpMsg struct {
-	Type    string
+	Type    int
 	Content []byte
 }
 
@@ -17,6 +26,16 @@ type Tcp struct {
 	conn    net.Conn
 	name    string
 	watchCh chan *TcpMsg
+}
+
+type TMSystemMsg struct {
+	Type    int
+	Content []byte
+}
+
+func (ts *TMSystemMsg) Bytes() []byte {
+	bytes, _ := json.Marshal(ts)
+	return bytes
 }
 
 func NewTcp(c net.Conn) *Tcp {
@@ -78,7 +97,7 @@ func (t *Tcp) Read() (*TcpMsg, error) {
 	return msg, nil
 }
 
-func (t *Tcp) Send(msgType string, content []byte) error {
+func (t *Tcp) Send(msgType int, content []byte) error {
 	msg := &TcpMsg{
 		Type:    msgType,
 		Content: content,
